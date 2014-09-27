@@ -42,7 +42,8 @@
        [:li
         [:form.navbar-form {:role "form"}
          [:div.form-group {:style {:padding-right "10px"}}
-          [:button.btn.btn-success {:type "button"}
+          [:a.btn.btn-success {:href "#/add"}
+           ;; {:type "button"}
            [:span.fa.fa-plus-square ""] " Add site"]]
 
          [:div.form-group {:style {:padding-right "10px"}}
@@ -75,9 +76,10 @@
                                      (reset! user (assoc data :screen :home)))
                           :error-handler (fn [response]
                                            (reset! user {:screen :home}))
-                          ;; :response-format :json
-                          ;; :keywords? true
                           })))
+
+(defroute "/add" []
+  (swap! user assoc :screen :add))
 
 (defroute "*" []
   (secretary/dispatch! "/home"))
@@ -105,8 +107,24 @@
     [:p.lead "We've already added a few websites for you on the column on the left."]
     ]])
 
+(defn add-feed-screen []
+  [:div.well
+   [:h3 "Track a website"]
+   [:p.lead (str "Type or paste the address of a website in the field below."
+                 "The program will add it to your list of websites.")]
+   [:form {:role "form"}
+    [:div.form-group
+     [:label {:for "rss-address"} "Website to track"]
+      [:input.form-control {:id "address" :type "url" :name "address"
+                            :placeholder "Enter the website or feed address here"}]]
+    [:button.btn.btn-success
+     {:type "button" :onClick (fn [] (.log js/console (.-value (by-id "address"))))}
+     [:span.fa.fa-plus-square ""] " Track this website"
+     ]]])
+
 (defn main-screen []
-  (let [detail-fns {:home welcome-screen
+  (let [detail-fns {:home    welcome-screen
+                    :add     add-feed-screen
                     :loading (fn [] (message-screen "loading..."))
                     }
         detail-key (get @user :screen :home)
@@ -116,7 +134,7 @@
       [:div.sidebar.nav-pills.nav-stacked.col-sm-3.col-md-2
 
        [:ul.nav.nav-sidebar
-        [:li {:class (if (= :home detail-key) "active" "")}
+        [:li {:class (if (#{:home :add} detail-key) "active" "")}
          [:a {:href "#"} [:span {:class "glyphicon glyphicon-home"}] " Home"]]
         ]
 
@@ -129,12 +147,14 @@
             [:span.badge.pull-right (feed "unread")] (str " " (feed "title"))]])
         ]
        ]
-      [:div {:class "container main col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 col-sm-height"}
-       (detail-fn)
+      [:div.container.main.col-sm-9.col-sm-offset-3.col-md-10.col-md-offset-2.col-sm-height
+       [:div {:style {:padding-top "12px"}}
+        (detail-fn)
+        ]
        ]]]))
 
 (defn login-screen []
-  [:div.container {:style {:padding-top "20px"}}
+  [:div.container
    [:div.jumbotron
     [:h1 "Friendly Reader"]
     [:p.lead (str "An user friendly reader to follow the news of your favourite "
