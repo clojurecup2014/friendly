@@ -13,6 +13,7 @@
                  [friend-oauth2 "0.1.1" :exclusions [org.apache.httpcomponents/httpcore]]
                  [ring-server "0.3.0" :exclusions [ring]]
                  [http-kit "2.0.0"]
+                 [hickory "0.5.2"] ;; parse HTML to extract potential RSS feeds
 
                  ;; web resources, css, etc
                  [org.webjars/bootstrap "3.2.0"]
