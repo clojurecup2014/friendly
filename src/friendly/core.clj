@@ -1,5 +1,6 @@
 (ns friendly.core
-  (:require [compojure.core :refer :all]
+  (:require [clj-http.client :as client]
+            [compojure.core :refer :all]
             [compojure.handler :as handler]
             [compojure.route :as route]
             [cemerick.friend :as friend]
@@ -8,17 +9,40 @@
             (cemerick.friend [workflows :as workflows]
                              [credentials :as creds])
             [ring.adapter.jetty :as jetty]
+            [ring.middleware.reload :as reload]
             [ring.util.response :as response])
   (:use [ring.middleware.file-info :only [wrap-file-info]]
         [ring.middleware.json :only [wrap-json-response wrap-json-body]]
         [ring.middleware.params :only [wrap-params]]
         [ring.middleware.resource :only [wrap-resource]]
-        [ring.middleware.session :only [wrap-session]]))
+        [ring.middleware.session :only [wrap-session]]
+        [org.httpkit.server :only [run-server]])
+
+  (:import [java.security MessageDigest]))
 
 ;; HELPERS ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; MD5 helper from https://gist.github.com/jizhang/4325757
+(defn md5 [s]
+  (let [algorithm (MessageDigest/getInstance "MD5")
+        size (* 2 (.getDigestLength algorithm))
+        raw (.digest algorithm (.getBytes s))
+        sig (.toString (BigInteger. 1 raw) 16)
+        padding (apply str (repeat (- size (count sig)) "0"))]
+    (str padding sig)))
+
+(defn gravatar [email]
+  (str "https://secure.gravatar.com/avatar/" (md5 email) "?s=24"))
+
+(def config
+  (read-string (slurp "resources/config.edn")))
+
 (defn in-dev? []
-  (= "denis" (System/getenv "USER")))
+  (= :development (:env config)))
+
+;; Default options for clj-http client
+(def clj-http-opts
+  {:as :json, :coerce :always, :content-type :json, :throw-exceptions :false})
 
 ;; OAUTH2 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -33,8 +57,12 @@
   ;;    "emails": [{"value": "denis.fuenzalida@gmail.com","type": "account"}]
   ;;    ...}
 
-  (println token)
-  {:identity token :roles #{::user}})
+  (let [access-token (:access-token token)
+        gplus-addr "https://www.googleapis.com/plus/v1/people/me?access_token="
+        gplus-info (client/get (str gplus-addr access-token) clj-http-opts)
+        email (-> gplus-info :body :emails first :value)]
+    ;; (println "Gplus email:" email)
+    {:identity token :email email :roles #{::user}}))
 
 (def client-config
   {;; APP: friendly-reader-777
@@ -57,6 +85,14 @@
                               :grant_type "authorization_code"
                               :redirect_uri (format-config-uri client-config)}}})
 
+(defn session-email
+  "Find the email stored in the session"
+  [request]
+  (let [token (get-in request [:session :cemerick.friend/identity :current :access-token])]
+    (get-in request [:session :cemerick.friend/identity :authentications
+                     {:access-token token}
+                     :email])))
+
 ;; ROUTES ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defroutes ring-app
@@ -65,6 +101,14 @@
        (println "Session in '/' contains:" (:session request))
        {:status 200
         :body (slurp "resources/public/index.html")})
+
+  (GET "/api/userinfo" request
+       (let [token (get-in request [:session :cemerick.friend/identity :current :access-token])
+             email (session-email request)
+             gravatar (gravatar email)]
+         (friend/authorize #{::user}
+                           {:status 200
+                            :body {:email email :token token :gravatar gravatar}})))
 
   (GET "/hello" request
        (friend/authorize #{::user}
@@ -100,20 +144,12 @@
               wrap-session ;; required fof openid to save data in the session
               handler/site))
 
-;; Jetty-based
-
-(defn -main [& args]
-  (println "Running Friendly server...")
-  ;; (let [handler (if (in-dev?)
-  ;;                 (reload/wrap-reload app) app)];; only reload when dev
-    (jetty/run-jetty app {:port 3000}))
-
 ;; HTTP-Kit based
 
-;; (defn -main [& args] ;; entry point, lein run will pick up and start from here
-;;   (let [handler (if (in-dev?)
-;;                   (reload/wrap-reload app) ;; only reload when dev
-;;                   app)]
-;;     (println "Running server...")
-;;     (run-server handler {:port 3000})))
+(defn -main [& args] ;; entry point, lein run will pick up and start from here
+  (let [handler (if (in-dev?)
+                  (reload/wrap-reload app) ;; only reload when dev
+                  app)]
+    (println "Running Friendly HTTP Kit server...")
+    (run-server app {:port 3000})))
 
