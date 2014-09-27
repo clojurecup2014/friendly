@@ -36,7 +36,7 @@
    :default-landing-uri "/"
    :workflows [(openid/workflow
                 :openid-uri "/login-openid"
-                :realm (if in-dev? "http://localhost:3000" "http://friendly.clojurecup.com/")
+                :realm (if (in-dev?) "http://localhost:3000" "http://friendly.clojurecup.com/")
                 :credential-fn identity)]})
 
 (defn wrap-logging [handler]
@@ -58,7 +58,7 @@
 ;; HTTP-Kit based
 
 (defn -main [& args] ;; entry point, lein run will pick up and start from here
-  (let [handler (if in-dev?
+  (let [handler (if (in-dev?)
                   (reload/wrap-reload app) ;; only reload when dev
                   app)]
     (println "Running server...")
