@@ -16,6 +16,7 @@
 
                  ;; web resources, css, etc
                  [org.webjars/bootstrap "3.2.0"]
+                 [org.webjars/bootswatch-lumen "3.2.0-1"]
                  [org.webjars/bootswatch-readable "3.2.0-1"]
                  [org.webjars/react "0.11.1"]
                  [org.webjars/jquery "1.11.1"]
