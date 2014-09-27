@@ -20,6 +20,8 @@
 (defn error-handler [response]
   (.log js/console (str "ERROR: " response)))
 
+(declare discover-feed) ;; try to discover a feed in a URL of pseudo URL
+
 ;; UI ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn active? [screen current]
@@ -65,6 +67,101 @@
     ]
    ])
 
+(defn message-screen [message]
+  [:div
+   [:div.row
+    [:div.alert.alert-info message]]])
+
+(defn welcome-screen []
+  [:div.row {:style {:padding-top "20px"}}
+   [:div.jumbotron
+    [:h2 "Welcome to Friendly Reader!"]
+    [:p.lead "You can add websites to follow by pressing the "
+          [:a.btn.btn-sm.btn-success {:href "#/add"}
+           [:span.fa.fa-plus-square ""] " Add site"]
+    " button."]
+    [:p.lead "We've already added a few suggested websites for you on the column on the left."]
+    ]])
+
+(defn add-feed-screen []
+  [:div.well
+   [:h3 "Track a website"]
+   [:p.lead (str "Type or paste the address of a website in the field below."
+                 "The program will add it to your list of websites.")]
+   [:form {:role "form"}
+    [:div.form-group
+     [:label {:for "rss-address"} "Website to track"]
+      [:input.form-control {:id "new-address" :type "url"
+                            :placeholder "Enter the website or feed address here"}]]
+    [:button.btn.btn-success
+     {:type "button"
+      :onClick (fn []
+                 (let [new-address (.-value (by-id "new-address"))]
+                   (when-not (zero? (count new-address))
+                     (discover-feed new-address))))}
+     [:span.fa.fa-plus-square ""] " Track this website"
+     ]]])
+
+(defn main-screen []
+  (let [detail-fns {:home    welcome-screen
+                    :add     add-feed-screen
+                    :loading (fn [] (message-screen "loading..."))
+                    }
+        detail-key (get @user :screen :home)
+        detail-fn  (detail-fns detail-key)]
+    [:div
+     [:div.row
+      [:div.sidebar.nav-pills.nav-stacked.col-sm-3.col-md-2
+
+       [:ul.nav.nav-sidebar
+        [:li {:class (if (#{:home :add} detail-key) "active" "")}
+         [:a {:href "#"} [:span {:class "glyphicon glyphicon-home"}] " Home"]]
+        ]
+
+       [:ul.nav.nav-sidebar
+        (for [i (range (count (@user "feeds"))) :let [feed ((@user "feeds") i)]]
+          ^{:key (feed "title")}
+          [:li {:class (if (= :welcome detail-key) "active" "")}
+           [:a {:href (str "#/feeds/" (feed "url"))}
+            [:img {:src (feed "favicon") :height 16 :width 16}]
+            [:span.badge.pull-right (feed "unread")] (str " " (feed "title"))]])
+        ]
+       ]
+      [:div.container.main.col-sm-9.col-sm-offset-3.col-md-10.col-md-offset-2.col-sm-height
+       [:div {:style {:padding-top "12px"}}
+        (detail-fn)
+        ]]]]))
+
+(defn login-screen []
+  [:div.container
+   [:div.jumbotron
+    [:h1 "Friendly Reader"]
+    [:p.lead (str "An user friendly reader to follow the news of your favourite "
+                  "blogs and websites, from the comfort of your hammock.")]
+    [:p.lead "Written in Clojure, no registration required."]
+    [:p
+     [:a.btn.btn-lg.btn-danger {:href "/login/google" :role "button"}
+      [:i.glyphicon.glyphicon-user ""] " Log in with Google"]
+     ]]])
+
+(defn home-screen []
+  [:div
+   (if (@user "email")
+     (main-screen)
+     (login-screen))
+   ])
+
+(defn show-app []
+  (let [screen (:screen @user)
+        screen-fns {:home home-screen :message message-screen}
+        screen-fn (get screen-fns screen home-screen)]
+    (screen-fn)))
+
+;; SERVER REQUESTS ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn discover-feed [url]
+  (println "discover-feed" url))
+
 ;; ROUTING ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (secretary/set-config! :prefix "#")
@@ -91,92 +188,6 @@
     (.setEnabled true)))
 
 (secretary/dispatch! "/")
-
-;; SCREEN LOGIC ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defn message-screen [message]
-  [:div
-   [:div.row
-    [:div.alert.alert-info message]]])
-
-(defn welcome-screen []
-  [:div.row {:style {:padding-top "20px"}}
-   [:div.jumbotron
-    [:h2 "Welcome to Friendly Reader"]
-    [:p.lead "You can add websites to follow by pressing the [+] button."]
-    [:p.lead "We've already added a few websites for you on the column on the left."]
-    ]])
-
-(defn add-feed-screen []
-  [:div.well
-   [:h3 "Track a website"]
-   [:p.lead (str "Type or paste the address of a website in the field below."
-                 "The program will add it to your list of websites.")]
-   [:form {:role "form"}
-    [:div.form-group
-     [:label {:for "rss-address"} "Website to track"]
-      [:input.form-control {:id "address" :type "url" :name "address"
-                            :placeholder "Enter the website or feed address here"}]]
-    [:button.btn.btn-success
-     {:type "button" :onClick (fn [] (.log js/console (.-value (by-id "address"))))}
-     [:span.fa.fa-plus-square ""] " Track this website"
-     ]]])
-
-(defn main-screen []
-  (let [detail-fns {:home    welcome-screen
-                    :add     add-feed-screen
-                    :loading (fn [] (message-screen "loading..."))
-                    }
-        detail-key (get @user :screen :home)
-        detail-fn  (detail-fns detail-key)]
-    [:div
-     [:div.row
-      [:div.sidebar.nav-pills.nav-stacked.col-sm-3.col-md-2
-
-       [:ul.nav.nav-sidebar
-        [:li {:class (if (#{:home :add} detail-key) "active" "")}
-         [:a {:href "#"} [:span {:class "glyphicon glyphicon-home"}] " Home"]]
-        ]
-
-       [:ul.nav.nav-sidebar
-        (for [i (range (count (@user "feeds"))) :let [feed ((@user "feeds") i)]]
-          ^{:key (feed "title")}
-          [:li {:class (if (= :welcome detail-key) "active" "")}
-           [:a {:href (str "#/feeds/" (feed "url"))}
-            [:img {:src "https://news.ycombinator.com/favicon.ico" :width 16}]
-            [:span.badge.pull-right (feed "unread")] (str " " (feed "title"))]])
-        ]
-       ]
-      [:div.container.main.col-sm-9.col-sm-offset-3.col-md-10.col-md-offset-2.col-sm-height
-       [:div {:style {:padding-top "12px"}}
-        (detail-fn)
-        ]
-       ]]]))
-
-(defn login-screen []
-  [:div.container
-   [:div.jumbotron
-    [:h1 "Friendly Reader"]
-    [:p.lead (str "An user friendly reader to follow the news of your favourite "
-                  "blogs and websites from the comfort of your hammock.")]
-    [:p.lead "Written in Clojure, no registration required."]
-    [:p
-     [:a.btn.btn-lg.btn-danger {:href "/login/google" :role "button"}
-      [:i.glyphicon.glyphicon-user ""] " Log in with Google"]
-     ]]])
-
-(defn home-screen []
-  [:div
-   (if (@user "email")
-     (main-screen)
-     (login-screen))
-   ])
-
-(defn show-app []
-  (let [screen (:screen @user)
-        screen-fns {:home home-screen :message message-screen}
-        screen-fn (get screen-fns screen home-screen)]
-    (screen-fn)))
 
 ;; MAIN APP ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
