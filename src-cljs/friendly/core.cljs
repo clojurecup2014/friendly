@@ -84,7 +84,10 @@
     [:div.alert.alert-info message]]])
 
 (defn main-screen []
-  (message-screen (str "Main screen for user " (@user "email"))))
+  [:div.container {:style {:padding-top "20px"}}
+   [:div.jumbotron
+    [:h1 "Main screen"]
+    [:p.lead "Something nice is coming soon!"]]])
 
 (defn login-screen []
   [:div.container {:style {:padding-top "20px"}}
