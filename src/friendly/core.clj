@@ -49,26 +49,19 @@
 ;; Don't forget to configure the Google consent screen for this app
 ;; See also http://stackoverflow.com/a/25762444/483566
 
-(defn credential-fn [token]
-  ;; lookup token in DB or whatever to fetch appropriate :roles
-  ;; eg. GET "https://www.googleapis.com/plus/v1/people/me?access_token=TOKEN" and parse JSON,
-  ;; which contains:
-  ;;    { ...
-  ;;    "emails": [{"value": "denis.fuenzalida@gmail.com","type": "account"}]
-  ;;    ...}
-
+(defn credential-fn
+  "Looks for the user email using the Google+ API after login with Google"
+  [token]
   (let [access-token (:access-token token)
         gplus-addr "https://www.googleapis.com/plus/v1/people/me?access_token="
         gplus-info (client/get (str gplus-addr access-token) clj-http-opts)
         email (-> gplus-info :body :emails first :value)]
-    ;; (println "Gplus email:" email)
     {:identity token :email email :roles #{::user}}))
 
 (def client-config
   {;; APP: friendly-reader-777
    :client-id "981371857470-e6nscou0m1393krkrgttqqmtcr6ne36e.apps.googleusercontent.com"
    :client-secret "5TTsogg_Z-5kxTusdXy7E208"
-
    :callback {:domain "http://localhost:3000" :path "/oauth2callback"}})
 
 (def uri-config
@@ -110,11 +103,9 @@
                            {:status 200
                             :body {:email email :token token :gravatar gravatar}})))
 
-  (GET "/hello" request
-       (friend/authorize #{::user}
-                         (println "*** /hello ***")
-                         (println (:session request))
-                         (response/redirect "/")))
+  ;; Just login to obtain your email info in credential-fn and redirect to the root
+  (GET "/login/google" request
+       (friend/authorize #{::user} (response/redirect "/")))
 
   (friend/logout (ANY "/logout" request (ring.util.response/redirect "/"))))
 
