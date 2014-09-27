@@ -21,8 +21,15 @@
 
 ;; DATABASE ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def default-feeds [{:title "Planet Clojure" :url "http://planet.clojure.in/atom.xml" :unread 42}
-                    {:title "Hacker News" :url "https://news.ycombinator.com/rss" :unread 7}])
+(def default-feeds [{:title "Planet Clojure"
+                     :favicon "http://planet.clojure.in/static/i/favicon.gif"
+                     :url "http://planet.clojure.in/atom.xml" :unread 42}
+                    {:title "Reddit /r/Clojure"
+                     :url "http://www.reddit.com/r/Clojure/.rss"
+                     :favicon "http://www.reddit.com/favicon.ico" :unread 16}
+                    {:title "Hacker News" :url "https://news.ycombinator.com/rss"
+                     :favicon "https://news.ycombinator.com/favicon.ico"
+                     :unread 7}])
 
 (def subscriptions (atom {"denis.fuenzalida@gmail.com" default-feeds}))
 
