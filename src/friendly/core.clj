@@ -91,17 +91,18 @@
 (defroutes ring-app
 
   (GET "/" request
-       (println "Session in '/' contains:" (:session request))
        {:status 200
         :body (slurp "resources/public/index.html")})
 
   (GET "/api/userinfo" request
-       (let [token (get-in request [:session :cemerick.friend/identity :current :access-token])
-             email (session-email request)
-             gravatar (gravatar email)]
-         (friend/authorize #{::user}
-                           {:status 200
-                            :body {:email email :token token :gravatar gravatar}})))
+       (let [token (get-in request [:session :cemerick.friend/identity :current :access-token])]
+         (if token
+           (let [email (session-email request)
+                 gravatar (gravatar email)]
+             (friend/authorize #{::user}
+                               {:status 200
+                                :body {:email email :token token :gravatar gravatar}}))
+           {})))
 
   ;; Just login to obtain your email info in credential-fn and redirect to the root
   (GET "/login/google" request
