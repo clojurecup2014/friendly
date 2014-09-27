@@ -33,9 +33,24 @@
      [:span.sr-only "Toggle navigation"]
      [:span.icon-bar] [:span.icon-bar] [:span.icon-bar]]
     [:a.navbar-brand {:href "#"} "Friendly Reader"]]
-   [:div {:class "navbar-collapse collapse"}
+   [:div.navbar-collapse.collapse
+
     (when (@user "email")
+
       [:ul.nav.navbar-nav.navbar-right
+
+       [:li
+        [:form.navbar-form {:role "form"}
+         [:div.form-group {:style {:padding-right "10px"}}
+          [:button.btn.btn-success {:type "button"}
+           [:span.fa.fa-plus-square ""] " Add site"]]
+
+         [:div.form-group {:style {:padding-right "10px"}}
+          [:button.btn.btn-warning {:type "button"}
+           [:span.fa.fa-check ""] " Mark as read"]]
+
+         ]]
+
        [:li.dropdown
         [:a.dropdown-toggle {:href "" :data-toggle "dropdown"}
          [:img {:height 24 :width 24 :src (@user "gravatar")
@@ -57,7 +72,6 @@
   (if (@user "email")
     (swap! user assoc :screen :home)
     (GET "/api/userinfo" {:handler (fn [data]
-                                     (println (str data))
                                      (reset! user (assoc data :screen :home)))
                           :error-handler (fn [response]
                                            (reset! user {:screen :home}))
@@ -83,17 +97,48 @@
    [:div.row
     [:div.alert.alert-info message]]])
 
-(defn main-screen []
-  [:div.container {:style {:padding-top "20px"}}
+(defn welcome-screen []
+  [:div.row {:style {:padding-top "20px"}}
    [:div.jumbotron
-    [:h1 "Main screen"]
-    [:p.lead "Something nice is coming soon!"]]])
+    [:h2 "Welcome to Friendly Reader"]
+    [:p.lead "You can add websites to follow by pressing the [+] button."]
+    [:p.lead "We've already added a few websites for you on the column on the left."]
+    ]])
+
+(defn main-screen []
+  (let [detail-fns {:home welcome-screen
+                    :loading (fn [] (message-screen "loading..."))
+                    }
+        detail-key (get @user :screen :home)
+        detail-fn  (detail-fns detail-key)]
+    [:div
+     [:div.row
+      [:div.sidebar.nav-pills.nav-stacked.col-sm-3.col-md-2
+
+       [:ul.nav.nav-sidebar
+        [:li {:class (if (= :home detail-key) "active" "")}
+         [:a {:href "#"} [:span {:class "glyphicon glyphicon-home"}] " Home"]]
+        ]
+
+       [:ul.nav.nav-sidebar
+        (for [i (range (count (@user "feeds"))) :let [feed ((@user "feeds") i)]]
+          ^{:key (feed "title")}
+          [:li {:class (if (= :welcome detail-key) "active" "")}
+           [:a {:href (str "#/feeds/" (feed "url"))}
+            [:img {:src "https://news.ycombinator.com/favicon.ico" :width 16}]
+            [:span.badge.pull-right (feed "unread")] (str " " (feed "title"))]])
+        ]
+       ]
+      [:div {:class "container main col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 col-sm-height"}
+       (detail-fn)
+       ]]]))
 
 (defn login-screen []
   [:div.container {:style {:padding-top "20px"}}
    [:div.jumbotron
     [:h1 "Friendly Reader"]
-    [:p.lead "An user friendly reader to follow the news of your favourite blogs and websites."]
+    [:p.lead (str "An user friendly reader to follow the news of your favourite "
+                  "blogs and websites from the comfort of your hammock.")]
     [:p.lead "Written in Clojure, no registration required."]
     [:p
      [:a.btn.btn-lg.btn-danger {:href "/login/google" :role "button"}
