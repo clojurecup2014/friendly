@@ -6,13 +6,12 @@
   :dependencies [;; server
                  [org.clojure/clojure "1.6.0"]
                  [clj-http "1.0.0"]
-                 [ring/ring-core "1.3.1"]
-                 [ring/ring-devel "1.3.1"]
                  [ring/ring-json "0.3.1"]
-                 [compojure "1.1.8"]
-                 [com.cemerick/friend "0.2.1"]
                  [org.clojure/data.json "0.2.5"]
-                 [http-kit "2.0.0"]
+                 [compojure "1.1.5" :exclusions [ring/ring-core org.clojure/core.incubator]]
+                 [com.cemerick/friend "0.2.0" :exclusions [ring/ring-core]]
+                 [friend-oauth2 "0.1.1" :exclusions [org.apache.httpcomponents/httpcore]]
+                 [ring-server "0.3.0" :exclusions [ring]]
 
                  ;; web resources, css, etc
                  [org.webjars/bootstrap "3.2.0"]
