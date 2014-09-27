@@ -17,8 +17,14 @@
         [ring.middleware.resource :only [wrap-resource]]
         [ring.middleware.session :only [wrap-session]]
         [org.httpkit.server :only [run-server]])
-
   (:import [java.security MessageDigest]))
+
+;; DATABASE ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(def default-feeds [{:title "Planet Clojure" :url "http://planet.clojure.in/atom.xml" :unread 42}
+                    {:title "Hacker News" :url "https://news.ycombinator.com/rss" :unread 7}])
+
+(def subscriptions (atom {"denis.fuenzalida@gmail.com" default-feeds}))
 
 ;; HELPERS ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -94,12 +100,15 @@
   (GET "/api/userinfo" request
        (let [token (get-in request [:session :cemerick.friend/identity :current :access-token])]
          (if token
-           (let [email (session-email request)
-                 gravatar (gravatar email)]
+           (let [email    (session-email request)
+                 gravatar (gravatar email)
+                 feeds    (get-in subscriptions email default-feeds)]
              (friend/authorize #{::user}
                                {:status 200
-                                :body {:email email :token token :gravatar gravatar}}))
-           {})))
+                                :body {:email email :token token :feeds feeds :gravatar gravatar}}))
+           {:status 403
+            :headers {"Content-type" "application/json"}
+            :body {:error "Not logged in!"}})))
 
   ;; Just login to obtain your email info in credential-fn and redirect to the root
   (GET "/login/google" request
