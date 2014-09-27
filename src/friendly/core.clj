@@ -59,10 +59,7 @@
     {:identity token :email email :roles #{::user}}))
 
 (def client-config
-  {;; APP: friendly-reader-777
-   :client-id "981371857470-e6nscou0m1393krkrgttqqmtcr6ne36e.apps.googleusercontent.com"
-   :client-secret "5TTsogg_Z-5kxTusdXy7E208"
-   :callback {:domain "http://localhost:3000" :path "/oauth2callback"}})
+  (:google-oauth config))
 
 (def uri-config
   {:authentication-uri {:url "https://accounts.google.com/o/oauth2/auth"
