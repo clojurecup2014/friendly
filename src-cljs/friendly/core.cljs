@@ -87,7 +87,15 @@
   (message-screen (str "Main screen for user " (@user "email"))))
 
 (defn login-screen []
-  (message-screen (str "Login screen: " @user)))
+  [:div.container {:style {:padding-top "20px"}}
+   [:div.jumbotron
+    [:h1 "Friendly Reader"]
+    [:p.lead "An user friendly reader to follow the news of your favourite blogs and websites."]
+    [:p.lead "Written in Clojure, no registration required."]
+    [:p
+     [:a.btn.btn-lg.btn-danger {:href "/login/google" :role "button"}
+      [:i.glyphicon.glyphicon-user ""] " Log in with Google"]
+     ]]])
 
 (defn home-screen []
   [:div
