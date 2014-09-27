@@ -12,6 +12,7 @@
                  [com.cemerick/friend "0.2.0" :exclusions [ring/ring-core]]
                  [friend-oauth2 "0.1.1" :exclusions [org.apache.httpcomponents/httpcore]]
                  [ring-server "0.3.0" :exclusions [ring]]
+                 [http-kit "2.0.0"]
 
                  ;; web resources, css, etc
                  [org.webjars/bootstrap "3.2.0"]
