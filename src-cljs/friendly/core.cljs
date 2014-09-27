@@ -1,17 +1,29 @@
 (ns friendly.core
-  (:require [reagent.core :as reagent :refer [atom]]))
+  (:require [reagent.core :as reagent :refer [atom]]
+            [ajax.core :refer [GET POST]]
+            [secretary.core :as secretary :include-macros true :refer [defroute]]
+            [goog.events :as events])
+  (:import goog.History
+           goog.history.EventType))
 
 (enable-console-print!)
+
+;; GLOBAL STATE ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(def user (atom {}))
 
 ;; HELPERS ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn by-id [elem-id]
   (.getElementById js/document elem-id))
 
-;; GLOBAL STATE ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn error-handler [response]
+  (.log js/console (str "ERROR: " response)))
 
-(def user (atom {:email "denis@clojurecup.com"
-                 :icon "https://secure.gravatar.com/avatar/d9dbd0d79255e58265b5f7597e15eb9a?s=24"}))
+;; UI ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn active? [screen current]
+  (if (= screen current) "active" ""))
 
 (defn toolbar []
   [:div.container-fluid
@@ -22,12 +34,13 @@
      [:span.icon-bar] [:span.icon-bar] [:span.icon-bar]]
     [:a.navbar-brand {:href "#"} "Friendly Reader"]]
    [:div {:class "navbar-collapse collapse"}
-    (when (:email @user)
+    (when (@user "email")
       [:ul.nav.navbar-nav.navbar-right
        [:li.dropdown
         [:a.dropdown-toggle {:href "" :data-toggle "dropdown"}
-         [:img {:height 24 :width 24 :src (:icon @user) :style {:margin "0px 8px 0px"}}
-          (:email @user)
+         [:img {:height 24 :width 24 :src (@user "gravatar")
+                :style {:margin "0px 8px 0px"}}
+          (@user "email")
           [:span.caret ""]]
          [:ul.dropdown-menu {:role "menu"}
           [:li
@@ -36,7 +49,60 @@
     ]
    ])
 
+;; ROUTING ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(secretary/set-config! :prefix "#")
+
+(defroute home-path "/home" []
+  (if (@user "email")
+    (swap! user assoc :screen :home)
+    (GET "/api/userinfo" {:handler (fn [data]
+                                     (println (str data))
+                                     (reset! user (assoc data :screen :home)))
+                          :error-handler (fn [response]
+                                           (reset! user {:screen :home}))
+                          ;; :response-format :json
+                          ;; :keywords? true
+                          })))
+
+(defroute "*" []
+  (secretary/dispatch! "/home"))
+
+;; Quick and dirty history configuration.
+(let [h (History.)]
+  (goog.events/listen h EventType.NAVIGATE #(secretary/dispatch! (.-token %)))
+  (doto h
+    (.setEnabled true)))
+
+(secretary/dispatch! "/")
+
+;; SCREEN LOGIC ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn message-screen [message]
+  [:div
+   [:div.row
+    [:div.alert.alert-info message]]])
+
+(defn main-screen []
+  (message-screen (str "Main screen for user " (@user "email"))))
+
+(defn login-screen []
+  (message-screen (str "Login screen: " @user)))
+
+(defn home-screen []
+  [:div
+   (if (@user "email")
+     (main-screen)
+     (login-screen))
+   ])
+
+(defn show-app []
+  (let [screen (:screen @user)
+        screen-fns {:home home-screen :message message-screen}
+        screen-fn (get screen-fns screen home-screen)]
+    (screen-fn)))
 
 ;; MAIN APP ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (reagent/render-component (fn [] [toolbar]) (by-id "navbar"))
+(reagent/render-component (fn [] [show-app]) (by-id "app"))
