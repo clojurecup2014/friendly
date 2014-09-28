@@ -73,7 +73,7 @@
 (defn message-screen [message]
   [:div
    [:div.row
-    [:div.alert.alert-info message]]])
+    [:div.alert.alert-success message]]])
 
 (defn welcome-screen []
   [:div.row {:style {:padding-top "20px"}}
@@ -91,17 +91,17 @@
    [:h3 "Track a website"]
    [:p.lead (str "Type or paste the address of a website in the field below."
                  "The program will add it to your list of websites.")]
-   [:form {:role "form"}
+   [:form {:role "form" :action "#/"}
     [:div.form-group
      [:label {:for "rss-address"} "Website to track"]
       [:input.form-control {:id "new-address" :type "text"
-                            :placeholder "Enter the website or feed address here"}]]
+                            :placeholder "Enter the website here (eg. www.example.com)"}]]
     [:button.btn.btn-success
      {:type "button"
-      :onClick (fn []
-                 (let [new-address (.-value (by-id "new-address"))]
-                   (when-not (zero? (count new-address))
-                     (discover-feed new-address))))}
+      :on-click (fn []
+                   (let [new-address (.-value (by-id "new-address"))]
+                     (when-not (zero? (count new-address))
+                       (discover-feed new-address))))}
      [:span.fa.fa-plus-square ""] " Track this website"
      ]]])
 
@@ -158,7 +158,7 @@
   (let [detail-fns {:home      welcome-screen
                     :add       add-feed-screen
                     :show-feed show-feed-screen
-                    :loading   (fn [] (message-screen "loading..."))}
+                    :loading   (fn [] (message-screen "Loading..."))}
         detail-key (get @user :screen :home)
         detail-fn  (detail-fns detail-key)]
     [:div
