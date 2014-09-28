@@ -31,16 +31,16 @@
                      :favicon "https://news.ycombinator.com/favicon.ico" :unread "?"}
                     ])
 
-(def subscriptions (atom {})
+(def subscriptions (atom {}))
 
 (defn subscribe [email feed]
   (let [feed-props {:title (feeds/feed-title feed) :url feed
                     :favicon (feeds/find-favicon feed) :unread "?"}]
-    (swap! subscriptions update-in [email] conj feed-props)
+    (swap! subscriptions update-in [email] into [feed-props])
     (println @subscriptions)))
 
 (defn set-default-feeds! [email]
-  (if-not [@subscriptions email]
+  (if-not (@subscriptions email)
     (swap! subscriptions assoc email default-feeds)))
 
 ;; HELPERS ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -145,8 +145,17 @@
              :body {:message (str "Can't find a feed for: " url)}})))
 
   (GET "/api/feed" request
-       (let [url (get-in request [:params :url])
-             posts (feeds/posts url)]
+       (let [url   (get-in request [:params :url])
+             posts (feeds/posts url)
+             email (session-email request)
+             subs  (into [] (map (fn [feed]
+                                   (if (= url (:url feed))
+                                     (assoc feed :unread (count posts))
+                                     feed))
+                                 (@subscriptions email)))]
+         ;; update the number of posts in this feed
+         (swap! subscriptions assoc email subs)
+         (println (@subscriptions email))
          {:status 200
           :headers {"Content-type" "application/json"}
           :body {:posts posts}}))
