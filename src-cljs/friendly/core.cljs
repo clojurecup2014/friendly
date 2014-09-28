@@ -20,6 +20,9 @@
 (defn error-handler [response]
   (.log js/console (str "ERROR: " response)))
 
+(defn reset-location! [fragment] ;; eg "#/home"
+  (set! (.-href (.-location js/document)) fragment))
+
 (declare discover-feed) ;; try to discover a feed in a URL of pseudo URL
 
 ;; UI ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -45,7 +48,6 @@
         [:form.navbar-form {:role "form"}
          [:div.form-group {:style {:padding-right "10px"}}
           [:a.btn.btn-success {:href "#/add"}
-           ;; {:type "button"}
            [:span.fa.fa-plus-square ""] " Add site"]]
 
          [:div.form-group {:style {:padding-right "10px"}}
@@ -91,7 +93,7 @@
    [:form {:role "form"}
     [:div.form-group
      [:label {:for "rss-address"} "Website to track"]
-      [:input.form-control {:id "new-address" :type "url"
+      [:input.form-control {:id "new-address" :type "text"
                             :placeholder "Enter the website or feed address here"}]]
     [:button.btn.btn-success
      {:type "button"
@@ -120,7 +122,7 @@
 
        [:ul.nav.nav-sidebar
         (for [i (range (count (@user "feeds"))) :let [feed ((@user "feeds") i)]]
-          ^{:key (feed "title")}
+          ^{:key (str i (feed "title"))}
           [:li {:class (if (= :welcome detail-key) "active" "")}
            [:a {:href (str "#/feeds/" (feed "url"))}
             [:img {:src (feed "favicon") :height 16 :width 16}]
@@ -193,8 +195,10 @@
                          :format :json
                          :handler (fn [data]
                                     (update-user) ;; to update feeds data
+                                    (reset-location! "#/")
                                     (swap! user assoc :screen :home))
                          :error-handler (fn [resp]
+                                          (reset-location! "#/")
                                           (swap! user assoc :screen :home))}))
 
 (defroute "*" []
