@@ -82,7 +82,7 @@
           [:a.btn.btn-sm.btn-success {:href "#/add"}
            [:span.fa.fa-plus-square ""] " Add site"]
     " button."]
-    [:p.lead "We've already added a few suggested websites for you on the column on the left."]
+    [:p.lead "I've already added a few suggested websites for you, they are on the column to the left."]
     ]])
 
 (defn add-feed-screen []
@@ -104,11 +104,14 @@
      [:span.fa.fa-plus-square ""] " Track this website"
      ]]])
 
+(defn show-feed-screen []
+  (message-screen (str "Showing feed:" (@user :url))))
+
 (defn main-screen []
-  (let [detail-fns {:home    welcome-screen
-                    :add     add-feed-screen
-                    :loading (fn [] (message-screen "loading..."))
-                    }
+  (let [detail-fns {:home      welcome-screen
+                    :add       add-feed-screen
+                    :show-feed show-feed-screen
+                    :loading   (fn [] (message-screen "loading..."))}
         detail-key (get @user :screen :home)
         detail-fn  (detail-fns detail-key)]
     [:div
@@ -124,7 +127,7 @@
         (for [i (range (count (@user "feeds"))) :let [feed ((@user "feeds") i)]]
           ^{:key (str i (feed "title"))}
           [:li {:class (if (= :welcome detail-key) "active" "")}
-           [:a {:href (str "#/feeds/" (feed "url"))}
+           [:a {:href (str "#/feeds/" i)}
             [:img {:src (feed "favicon") :height 16 :width 16}]
             [:span.badge.pull-right (feed "unread")] (str " " (feed "title"))]])
         ]
@@ -201,6 +204,18 @@
                                           (reset-location! "#/")
                                           (swap! user assoc :screen :home))}))
 
+(defroute "/feeds/:index" [index]
+  (let [i (.parseInt js/window index)
+        feeds (@user "feeds")
+        feed (-> feeds (nth i))
+        url (get feed "url")]
+    (GET "/api/feed" {:params {:url url}
+                      :format :json
+                      :handler (fn [data]
+                                 (swap! user assoc :screen :show-feed :url url))
+                         :error-handler (fn [resp]
+                                          (reset-location! "#/")
+                                          (swap! user assoc :screen :home))})))
 (defroute "*" []
   (secretary/dispatch! "/home"))
 
