@@ -25,12 +25,12 @@
 
 ;; DATABASE ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def default-feeds [{:title "Planet Clojure" :url "http://planet.clojure.in/atom.xml"
-                     :favicon "http://planet.clojure.in/static/i/favicon.gif" :unread "?"}
-                    {:title "Reddit /r/Clojure" :url "http://www.reddit.com/r/Clojure/.rss"
+(def default-feeds [{:title "Reddit /r/Clojure" :url "http://www.reddit.com/r/Clojure/.rss"
                      :favicon "http://www.reddit.com/favicon.ico" :unread "?"}
                     {:title "Hacker News" :url "https://news.ycombinator.com/rss"
                      :favicon "https://news.ycombinator.com/favicon.ico" :unread "?"}
+                    {:title "Planet Clojure" :url "http://planet.clojure.in/atom.xml"
+                     :favicon "http://planet.clojure.in/static/i/favicon.gif" :unread "?"}
                     ])
 
 (def subscriptions (atom {}))
