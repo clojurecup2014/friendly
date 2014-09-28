@@ -52,7 +52,8 @@
            [:span.fa.fa-plus-square ""] " Add site"]]
 
          [:div.form-group {:style {:padding-right "10px"}}
-          [:button.btn.btn-warning {:type "button"}
+          [:button.btn.btn-warning
+           {:type "button" :on-click (fn [] (.alert js/window "Sorry, not implemented."))}
            [:span.fa.fa-check ""] " Mark as read"]]
 
          ]]
