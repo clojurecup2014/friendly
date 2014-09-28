@@ -26,7 +26,7 @@
 
 (defn find-rss [address]
   (let [potentials (potential-rss-addresses address)
-        found (->> (map find-alternate-links potentials)
+        found (->> (pmap find-alternate-links potentials)
                    flatten
                    (map :href)
                    (apply hash-set)
