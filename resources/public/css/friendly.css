@@ -1,5 +1,7 @@
+/* Based on http://getbootstrap.com/examples/dashboard/dashboard.css */
+
 body {
-    padding-top: 50px; /* Move down content because we have a fixed navbar that is 50px tall */
+    padding-top: 50px;
     font-weight: 400;
     min-height: 500px;
 }
@@ -7,20 +9,6 @@ body {
 h1, h2, h3 {
     font-weight: bold;
 }
-
-/*
- * Base structure
- */
-
-/* Move down content because we have a fixed navbar that is 50px tall */
-body {
-    padding-top: 50px;
-}
-
-
-/*
- * Global add-ons
- */
 
 .sub-header {
     padding-bottom: 10px;
@@ -80,10 +68,6 @@ body {
 .nav-sidebar>li>ul>li>a {
     padding-left: 50px;
 }
-
-/*
- * Main content
- */
 
 .main {
     padding: 20px;
