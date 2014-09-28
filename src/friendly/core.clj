@@ -31,6 +31,10 @@
                      :favicon "https://news.ycombinator.com/favicon.ico" :unread "?"}
                     {:title "Planet Clojure" :url "http://planet.clojure.in/atom.xml"
                      :favicon "http://planet.clojure.in/static/i/favicon.gif" :unread "?"}
+                    {:title "Cognitect Blog" :url "http://blog.cognitect.com/blog?format=rss"
+                     :favicon "http://blog.cognitect.com/favicon.ico" :unread "?"}
+                    {:title "YouTube ClojureTV" :url "http://gdata.youtube.com/feeds/base/users/ClojureTV/uploads?alt=rss&v=2&orderby=published&client=ytapi-youtube-profile"
+                     :favicon "http://youtube.com/favicon.ico" :unread "?"}
                     ])
 
 (def subscriptions (atom {}))
@@ -208,7 +212,7 @@
                                  (@subscriptions email)))]
          ;; update the number of posts in this feed
          (swap! subscriptions assoc email subs)
-         (println (@subscriptions email))
+         ;; (println (@subscriptions email))
          {:status 200
           :headers {"Content-type" "application/json"}
           :body {:posts posts}}))
