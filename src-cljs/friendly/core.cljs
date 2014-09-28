@@ -182,7 +182,7 @@
     [:h1 "Friendly Reader"]
     [:p.lead (str "A user friendly reader to follow the news of your favourite "
                   "blogs and websites, from the comfort of your hammock.")]
-    [:p.lead "Written in Clojure, no registration required."]
+    [:p.lead "Written in Clojure, Open Source, no registration required."]
     [:p
      [:a.btn.btn-lg.btn-danger {:href "/login/github" :role "button"}
       [:i.fa.fa-2x.fa-github ""] " Log in with Github"]
