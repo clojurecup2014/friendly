@@ -204,6 +204,7 @@
      ]]])
 
 (defn home-screen []
+  (.scrollTo js/window 0 0)
   [:div
    (if (@user "email")
      (main-screen)
