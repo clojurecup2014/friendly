@@ -105,23 +105,6 @@
      [:span.fa.fa-plus-square ""] " Track this website"
      ]]])
 
-;; HACK!
-;; $("#body-N")[0].innerHTML = $("#body-N")[0].innerText
-(defn post-bodies []
-  (println "post bodies")
-  (let [posts (get-in @user [:data "posts"])]
-    (doall
-     (for [i    (range (count posts))
-           post (nth posts i)
-           :let [id (str "body-" i) elem (by-id id)]]
-       (if elem
-         (let [div (.createElement js/document "DIV")]
-           (try
-             (set! (.-innerHTML div) (post "author"))
-             (.appendChild elem div)
-             (catch js/Error e nil))
-           ""))))))
-
 (defn show-feed-screen []
   (let [index (@user :index)
         feed  ((@user "feeds") index)
@@ -136,13 +119,15 @@
         [:a.btn.btn-danger.pull-right {:href "#" :on-click (fn [] (remove-feed url))}
          [:span.fa.fa-remove ""] " Remove this feed"]]]]
 
-     ;; (.setTimeout js/window (post-bodies) 2000) ;; HACK
      [:div.list-group
       (let [posts (get-in @user [:data "posts"])]
         (for [i (range (count posts))
               :let [post (nth posts i)
                     frag (hickory/parse-fragment (post "body"))
-                    hicc (map hickory/as-hiccup frag)
+                    hicc (try
+                           (map hickory/as-hiccup frag)
+                           (catch js/Error e
+                             ""))
                     ]]
           ^{:key (str "body-" i)}
           [:a.list-group-item
@@ -151,7 +136,9 @@
             [:strong (post "title")]
             (when-not (= "" (post "author")) [:small (str " by " (post "author"))])]
            [:p.list-group-item-text
-            (post "body")]]
+            (post "body")
+            ;; hicc ;; ALMOST WORKS!
+            ]]
           ))]
      ]))
 
