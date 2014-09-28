@@ -1,0 +1,12 @@
+{:env :development
+
+ ;; Register Google OAuth in https://console.developers.google.com > Create Project
+ :google-oauth {:client-id ""
+                :client-secret ""
+                :callback {:domain "http://localhost:3000" :path "/oauth2callback"}}
+
+ ;; Register Github OAuth in https://github.com/settings/applications
+ :github-oauth {:client-id ""
+                :client-secret ""
+                :callback {:domain "http://localhost:3000" :path "/github.callback"}}
+ }
