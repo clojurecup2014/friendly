@@ -71,9 +71,19 @@
    ])
 
 (defn message-screen [message]
-  [:div
-   [:div.row
-    [:div.alert.alert-success message]]])
+  [:div.well
+   [:h3 message]
+   [:div.progress
+    [:div.progress-bar.progress-bar-striped.active
+     {:role "progressbar" :style {:width "60%"}}]]])
+
+(defn added-screen []
+  [:div.well
+   [:h3 "All good!" [:small "The site was added to your list."]]
+   [:div.progress
+    [:div.progress-bar.progress-bar-success.progress-bar-striped
+     {:role "progressbar" :style {:width "100%"}}]]])
+
 
 (defn welcome-screen []
   [:div.row {:style {:padding-top "20px"}}
@@ -87,23 +97,25 @@
     ]])
 
 (defn add-feed-screen []
-  [:div.well
-   [:h3 "Track a website"]
-   [:p.lead (str "Type or paste the address of a website in the field below."
-                 "The program will add it to your list of websites.")]
-   [:form {:role "form" :action "#/"}
-    [:div.form-group
-     [:label {:for "rss-address"} "Website to track"]
+  [:div
+
+   [:div.well
+    [:h3 "Track a website"]
+    [:p.lead (str "Type or paste the address of a website in the field below."
+                  "The program will add it to your list of websites.")]
+    [:form {:role "form" :action "#/"}
+     [:div.form-group
+      [:label {:for "rss-address"} "Website to track"]
       [:input.form-control {:id "new-address" :type "text"
                             :placeholder "Enter the website here (eg. www.example.com)"}]]
-    [:button.btn.btn-success
-     {:type "button"
-      :on-click (fn []
+     [:button.btn.btn-success
+      {:type "button"
+       :on-click (fn []
                    (let [new-address (.-value (by-id "new-address"))]
                      (when-not (zero? (count new-address))
                        (discover-feed new-address))))}
-     [:span.fa.fa-plus-square ""] " Track this website"
-     ]]])
+      [:span.fa.fa-plus-square ""] " Track this website"
+      ]]]])
 
 (defn show-feed-screen []
   (let [index (@user :index)
@@ -146,6 +158,7 @@
   (let [detail-fns {:home      welcome-screen
                     :add       add-feed-screen
                     :show-feed show-feed-screen
+                    :added     added-screen
                     :loading   (fn [] (message-screen "Loading..."))}
         detail-key (get @user :screen :home)
         detail-fn  (detail-fns detail-key)]
@@ -241,14 +254,17 @@
 (defroute "/add" []
   (swap! user assoc :screen :add))
 
+(defroute "/added" []
+  (swap! user assoc :screen :added))
+
 (defroute "/discover/:url" [url]
   (swap! user assoc :screen :loading)
   (POST "/api/discover" {:params {:url url}
                          :format :json
                          :handler (fn [data]
                                     (update-user) ;; to update feeds data
-                                    (reset-location! "#/")
-                                    (swap! user assoc :screen :home))
+                                    (reset-location! "#/added")
+                                    (swap! user assoc :screen :added))
                          :error-handler (fn [resp]
                                           (reset-location! "#/")
                                           (swap! user assoc :screen :home))}))
