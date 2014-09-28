@@ -8,6 +8,7 @@
             [friend-oauth2.util :refer [format-config-uri]]
             (cemerick.friend [workflows :as workflows]
                              [credentials :as creds])
+            [friendly.feeds :as feeds]
             [ring.adapter.jetty :as jetty]
             [ring.middleware.reload :as reload]
             [ring.util.response :as response])
@@ -32,6 +33,12 @@
                      :unread 7}])
 
 (def subscriptions (atom {"denis.fuenzalida@gmail.com" default-feeds}))
+
+(defn subscribe [email feed]
+  (let [feed-props {:title "new feed" :favicon "https://github.com/favicon.ico"
+                    :url feed :unread "?"}]
+    (swap! subscriptions update-in [email] conj feed-props)
+    (println @subscriptions)))
 
 ;; HELPERS ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -109,7 +116,8 @@
          (if token
            (let [email    (session-email request)
                  gravatar (gravatar email)
-                 feeds    (get-in subscriptions email default-feeds)]
+                 feeds    (get-in @subscriptions [email] default-feeds)]
+             (println "email:" email)
              (friend/authorize #{::user}
                                {:status 200
                                 :body {:email email :token token :feeds feeds :gravatar gravatar}}))
@@ -120,6 +128,21 @@
   ;; Just login to obtain your email info in credential-fn and redirect to the root
   (GET "/login/google" request
        (friend/authorize #{::user} (response/redirect "/")))
+
+  (POST "/api/discover" request
+        (let [url (get-in request [:body :url])
+              feed (feeds/find-rss url)]
+          (if feed
+            (do
+              (let [email (session-email request)]
+                (subscribe email feed)
+                {:status 200
+                 :headers {"Content-type" "application/json"}
+                 :body {:url feed}}))
+            {:status 404
+             :headers {"Content-type" "application/json"}
+             :body {:message (str "Can't find a feed for: " url)}})))
+
 
   (friend/logout (ANY "/logout" request (ring.util.response/redirect "/"))))
 

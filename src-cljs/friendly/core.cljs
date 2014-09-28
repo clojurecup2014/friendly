@@ -160,7 +160,15 @@
 ;; SERVER REQUESTS ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn discover-feed [url]
-  (println "discover-feed" url))
+  (println "discover-feed: " url)
+  (secretary/dispatch! (str "/discover/" url)))
+
+(defn update-user []
+  (GET "/api/userinfo"
+       {:handler (fn [data]
+                   (reset! user (into @user data)))
+        :error-handler (fn [response]
+                         (println "ERROR: " (str response)))}))
 
 ;; ROUTING ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -170,6 +178,7 @@
   (if (@user "email")
     (swap! user assoc :screen :home)
     (GET "/api/userinfo" {:handler (fn [data]
+                                     (.setInterval js/window update-user 60000)
                                      (reset! user (assoc data :screen :home)))
                           :error-handler (fn [response]
                                            (reset! user {:screen :home}))
@@ -177,6 +186,16 @@
 
 (defroute "/add" []
   (swap! user assoc :screen :add))
+
+(defroute "/discover/:url" [url]
+  (swap! user assoc :screen :loading)
+  (POST "/api/discover" {:params {:url url}
+                         :format :json
+                         :handler (fn [data]
+                                    (update-user) ;; to update feeds data
+                                    (swap! user assoc :screen :home))
+                         :error-handler (fn [resp]
+                                          (swap! user assoc :screen :home))}))
 
 (defroute "*" []
   (secretary/dispatch! "/home"))
