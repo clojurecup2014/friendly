@@ -24,7 +24,7 @@
 (defn reset-location! [fragment] ;; eg "#/home"
   (set! (.-href (.-location js/document)) fragment))
 
-(declare discover-feed) ;; try to discover a feed in a URL of pseudo URL
+(declare discover-feed) ;; try to discover a feed in a URL or pseudo-URL
 
 ;; UI ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -123,7 +123,7 @@
            ""))))))
 
 (defn show-feed-screen []
-  ;; (.setTimeout js/window (post-bodies) 2000)
+  ;; (.setTimeout js/window (post-bodies) 2000) ;; HACK
   [:div.list-group
   (let [posts (get-in @user [:data "posts"])]
     (for [i (range (count posts))
@@ -151,11 +151,13 @@
      [:div.row
       [:div.sidebar.nav-pills.nav-stacked.col-sm-3.col-md-2
 
+       ;; SIDEBAR HOME
        [:ul.nav.nav-sidebar
         [:li {:class (if (#{:home :add} detail-key) "active" "")}
          [:a {:href "#"} [:span {:class "glyphicon glyphicon-home"}] " Home"]]
         ]
 
+       ;; SIDEBAR LIST OF FEEDS
        [:ul.nav.nav-sidebar
         (for [i (range (count (@user "feeds"))) :let [feed ((@user "feeds") i)]]
           ^{:key (str i (feed "title"))}
@@ -166,6 +168,8 @@
         ]
        ]
       [:div.container.main.col-sm-9.col-sm-offset-3.col-md-10.col-md-offset-2.col-sm-height
+
+       ;; DETAIL (PAGE CENTER)
        [:div {:style {:padding-top "12px"}}
         (detail-fn)
         ]]]]))
