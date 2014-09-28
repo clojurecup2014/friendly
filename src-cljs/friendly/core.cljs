@@ -227,7 +227,13 @@
                          (println "ERROR: " (str response)))}))
 
 (defn remove-feed [url]
-  (println "Remove" url))
+  (let [feeds    (@user "feeds")
+        filtered (into [] (filter #(not (= url (% "url"))) feeds))]
+    (POST "/api/delete" {:params {:url url}
+                         :format :json
+                         :handler (fn [data] (update-user))
+                         :error-handler (fn [data] (println data))})
+    ))
 
 ;; ROUTING ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

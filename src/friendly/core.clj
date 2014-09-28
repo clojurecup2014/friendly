@@ -144,6 +144,20 @@
              :headers {"Content-type" "application/json"}
              :body {:message (str "Can't find a feed for: " url)}})))
 
+  (POST "/api/discover" request
+        (let [url (get-in request [:body :url])
+              feed (feeds/find-rss url)]
+          (if feed
+            (do
+              (let [email (session-email request)]
+                (subscribe email feed)
+                {:status 200
+                 :headers {"Content-type" "application/json"}
+                 :body {:url feed}}))
+            {:status 404
+             :headers {"Content-type" "application/json"}
+             :body {:message (str "Can't find a feed for: " url)}})))
+
   (GET "/api/feed" request
        (let [url   (get-in request [:params :url])
              posts (feeds/posts url)
@@ -159,6 +173,19 @@
          {:status 200
           :headers {"Content-type" "application/json"}
           :body {:posts posts}}))
+
+  (POST "/api/delete" request
+       (let [url   (get-in request [:body :url])
+             email (session-email request)
+
+             ;; All the subscriptions except one by it's URL
+             subs  (into [] (filter (fn [feed]
+                                      (not (= url (:url feed)))) (@subscriptions email)))]
+         (swap! subscriptions assoc email subs)
+         (println (@subscriptions email))
+         {:status 200
+          :headers {"Content-type" "application/json"}
+          :body {:message "ok"}}))
 
   (friend/logout (ANY "/logout" request (ring.util.response/redirect "/"))))
 
