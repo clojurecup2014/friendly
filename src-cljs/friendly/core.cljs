@@ -105,7 +105,23 @@
      ]]])
 
 (defn show-feed-screen []
-  (message-screen (str "Showing feed:" (@user :url))))
+  (let [posts (get-in @user [:data "posts"])]
+    (for [post posts]
+      [:div
+       [:div.row.clearfix
+        [:h2 (post "title")
+         (when-not (= "" (post "author"))
+           [:small (str " by " (post "author"))])
+         [:a.btn.btn-default.btn-small
+          {:style {:margin-left "20px"} :href (post "url")
+           :target "_blank" :title "Open in new tab"}
+          [:i.glyphicon.glyphicon-hand-right ""]]
+         ]]
+
+       [:div.row
+        (when-not (= "" (post "body"))
+          [:p (post "body")])
+        [:hr]]])))
 
 (defn main-screen []
   (let [detail-fns {:home      welcome-screen
@@ -212,10 +228,11 @@
     (GET "/api/feed" {:params {:url url}
                       :format :json
                       :handler (fn [data]
-                                 (swap! user assoc :screen :show-feed :url url))
-                         :error-handler (fn [resp]
-                                          (reset-location! "#/")
-                                          (swap! user assoc :screen :home))})))
+                                 (swap! user assoc :screen :show-feed
+                                        :index index :data data))
+                      :error-handler (fn [resp]
+                                       (reset-location! "#/")
+                                       (swap! user assoc :screen :home))})))
 (defroute "*" []
   (secretary/dispatch! "/home"))
 

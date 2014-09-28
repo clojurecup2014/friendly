@@ -100,9 +100,7 @@
   "Find the email stored in the session"
   [request]
   (let [token (get-in request [:session :cemerick.friend/identity :current :access-token])]
-    (get-in request [:session :cemerick.friend/identity :authentications
-                     {:access-token token}
-                     :email])))
+    (get-in request [:session :cemerick.friend/identity :authentications {:access-token token} :email])))
 
 ;; ROUTES ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -118,7 +116,6 @@
            (let [email    (session-email request)
                  gravatar (gravatar email)
                  feeds    (get-in @subscriptions [email] default-feeds)]
-             (println "email:" email)
              (friend/authorize #{::user}
                                {:status 200
                                 :body {:email email :token token :feeds feeds :gravatar gravatar}}))
@@ -144,6 +141,12 @@
              :headers {"Content-type" "application/json"}
              :body {:message (str "Can't find a feed for: " url)}})))
 
+  (GET "/api/feed" request
+       (let [url (get-in request [:params :url])
+             posts (feeds/posts url)]
+         {:status 200
+          :headers {"Content-type" "application/json"}
+          :body {:posts posts}}))
 
   (friend/logout (ANY "/logout" request (ring.util.response/redirect "/"))))
 

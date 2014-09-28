@@ -38,10 +38,13 @@
                    (filter (complement nil?)))]
     (first found)))
 
-(defn feed-title [url]
+(defn feed [url]
   (let [input (SyndFeedInput.)
         feed  (.build input (XmlReader. (URL. url)))]
-    (.getTitle feed)))
+    feed))
+
+(defn feed-title [url]
+  (.getTitle (feed url)))
 
 (defn find-favicon [address]
   (let [url   (URL. address)
@@ -58,3 +61,15 @@
                (if (.endsWith home "/") "" "/")
                (-> icons first :href))))
       (catch Exception e dummy))))
+
+(defn posts [url]
+  (let [entries (.getEntries (feed url))]
+    (doall
+     (for [entry entries]
+       {:title  (.getTitle entry)
+        :author (.getAuthor entry)
+        :url    (.getLink entry)
+        :body   (try
+                  (-> entry .getContents first .getValue)
+                  (catch Exception e ""))
+        }))))
