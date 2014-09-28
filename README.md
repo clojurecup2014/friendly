@@ -5,9 +5,17 @@ http://friendly.clojurecup.com/
 
 ## Usage
 
-$ lein run
+- Clone the git repo, copy the file `resources/config.edn.example` to `resources/config.edn`
+- Register the application to use OAuth from either Google or Github (check the contents of `resources/config.edn.example`).
 
-Then visit http://localhost:3000
+To compile:
+
+```
+$ lein cljsbuild prod once
+$ lein run
+```
+
+Then point your browser to http://localhost:3000/
 
 ## License
 
