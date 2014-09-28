@@ -24,7 +24,7 @@
 (defn reset-location! [fragment] ;; eg "#/home"
   (set! (.-href (.-location js/document)) fragment))
 
-(declare discover-feed) ;; try to discover a feed in a URL or pseudo-URL
+(declare discover-feed remove-feed)
 
 ;; UI ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -123,22 +123,36 @@
            ""))))))
 
 (defn show-feed-screen []
-  ;; (.setTimeout js/window (post-bodies) 2000) ;; HACK
-  [:div.list-group
-  (let [posts (get-in @user [:data "posts"])]
-    (for [i (range (count posts))
-          :let [post (nth posts i)
-                frag (hickory/parse-fragment (post "body"))
-                hicc (map hickory/as-hiccup frag)
-                ]]
-      ^{:key (str "body-" i)}
-      [:a.list-group-item {:href (post "url") :target "_blank"}
-       [:h4.list-group-item-heading
-        [:strong (post "title")]
-        (when-not (= "" (post "author")) [:small (str " by " (post "author"))])]
-       [:p.list-group-item-text
-        (post "body")]]
-      ))])
+  (let [index (@user :index)
+        feed  ((@user "feeds") index)
+        url   (feed "url")]
+
+    [:div
+
+    ;; Feed title
+     [:div.list-group
+      [:div.list-group-item
+       [:h2 (feed "title")
+        [:a.btn.btn-danger.pull-right {:href "#" :on-click (fn [] (remove-feed url))}
+         [:span.fa.fa-remove ""] " Remove this feed"]]]]
+
+     ;; (.setTimeout js/window (post-bodies) 2000) ;; HACK
+     [:div.list-group
+      (let [posts (get-in @user [:data "posts"])]
+        (for [i (range (count posts))
+              :let [post (nth posts i)
+                    frag (hickory/parse-fragment (post "body"))
+                    hicc (map hickory/as-hiccup frag)
+                    ]]
+          ^{:key (str "body-" i)}
+          [:a.list-group-item {:href (post "url") :target "_blank"}
+           [:h4.list-group-item-heading
+            [:strong (post "title")]
+            (when-not (= "" (post "author")) [:small (str " by " (post "author"))])]
+           [:p.list-group-item-text
+            (post "body")]]
+          ))]
+     ]))
 
 (defn main-screen []
   (let [detail-fns {:home      welcome-screen
@@ -211,6 +225,9 @@
                    (reset! user (into @user data)))
         :error-handler (fn [response]
                          (println "ERROR: " (str response)))}))
+
+(defn remove-feed [url]
+  (println "Remove" url))
 
 ;; ROUTING ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
