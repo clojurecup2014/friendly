@@ -31,12 +31,15 @@
 
 (defn find-rss [address]
   (let [potentials (potential-rss-addresses address)
-        found (->> (pmap find-alternate-links potentials)
-                   flatten
-                   (map :href)
-                   (apply hash-set)
-                   (filter (complement nil?)))]
-    (first found)))
+        found      (->> (pmap find-alternate-links potentials)
+                        flatten
+                        (map :href)
+                        (apply hash-set)
+                        (filter (complement nil?)))
+        address    (first found)]
+    (if (.startsWith "//" address)
+      address
+      (str "http:" address))))
 
 (defn feed [url]
   (let [input (SyndFeedInput.)
