@@ -46,5 +46,13 @@
              :compiler {:output-to "resources/public/js/app.js"
                         :output-dir "resources/public/js/out"
                         :optimizations :none
-                        :source-map true}}]}
+                        :source-map true}}
+
+            {:id "prod"
+             :source-paths ["src-cljs"]
+             :compiler {:output-to "resources/public/js/app-prod.js"
+                        :output-dir "resources/public/js/out-prod"
+                        :optimizations :advanced
+                        :source-map "resources/public/js/app-prod.map"}}
+            ]}
   :main friendly.core)
