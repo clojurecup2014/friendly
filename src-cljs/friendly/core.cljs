@@ -24,7 +24,7 @@
 (defn reset-location! [fragment] ;; eg "#/home"
   (set! (.-href (.-location js/document)) fragment))
 
-(declare discover-feed remove-feed)
+(declare discover-feed remove-feed update-user)
 
 ;; UI ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -243,6 +243,7 @@
   (if (@user "email")
     (swap! user assoc :screen :home)
     (GET "/api/userinfo" {:handler (fn [data]
+                                     ;; TODO - This should be based on WebSockets
                                      (.setInterval js/window update-user 60000)
                                      (reset! user (assoc data :screen :home)))
                           :error-handler (fn [response]
@@ -265,6 +266,7 @@
                                           (swap! user assoc :screen :home))}))
 
 (defroute "/feeds/:index" [index]
+  (update-user) ;; to update feeds data
   (let [i (.parseInt js/window index)
         feeds (@user "feeds")
         feed (-> feeds (nth i))
@@ -278,6 +280,7 @@
                                        (reset-location! "#/")
                                        (swap! user assoc :screen :home))})))
 (defroute "*" []
+  (swap! user assoc :index nil)
   (secretary/dispatch! "/home"))
 
 ;; Quick and dirty history configuration.
