@@ -193,6 +193,7 @@
 (defn login-screen []
   [:div.container
    [:div.jumbotron
+    [:img.pull-right {:src "/img/vote-for-us.png" :style {:padding "40px"}}]
     [:h1 "Friendly Reader"]
     [:p.lead (str "A user friendly reader to follow the news of your favourite "
                   "blogs and websites, from the comfort of your hammock.")]
