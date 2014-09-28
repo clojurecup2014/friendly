@@ -165,7 +165,7 @@
             :body {:error "Not logged in!"}})))
 
   ;; Just login to obtain your email info in credential-fn and redirect to the root
-  (GET "/login/google" request
+  (GET "/login/github" request
        (friend/authorize #{::user} (response/redirect "/")))
 
   (POST "/api/discover" request

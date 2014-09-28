@@ -196,8 +196,8 @@
                   "blogs and websites, from the comfort of your hammock.")]
     [:p.lead "Written in Clojure, no registration required."]
     [:p
-     [:a.btn.btn-lg.btn-danger {:href "/login/google" :role "button"}
-      [:i.glyphicon.glyphicon-user ""] " Log in with Google"]
+     [:a.btn.btn-lg.btn-danger {:href "/login/github" :role "button"}
+      [:i.glyphicon.glyphicon-user ""] " Log in with Github"]
      ]]])
 
 (defn home-screen []
