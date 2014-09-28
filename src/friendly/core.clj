@@ -1,5 +1,6 @@
 (ns friendly.core
   (:require [clj-http.client :as client]
+            [cheshire.core :as cheshire]
             [compojure.core :refer :all]
             [compojure.handler :as handler]
             [compojure.route :as route]
@@ -11,6 +12,7 @@
             [friendly.feeds :as feeds]
             [ring.adapter.jetty :as jetty]
             [ring.middleware.reload :as reload]
+            [ring.util.codec :as codec]
             [ring.util.response :as response])
   (:use [ring.middleware.file-info :only [wrap-file-info]]
         [ring.middleware.json :only [wrap-json-response wrap-json-body]]
@@ -82,6 +84,23 @@
     (set-default-feeds! email)
     {:identity token :email email :roles #{::user}}))
 
+(defn call-github [endpoint access-token]
+  (-> (format "https://api.github.com%s%s&access_token=%s"
+        endpoint
+        (when-not (.contains endpoint "?") "?")
+        access-token)
+    client/get
+    :body
+    (cheshire/parse-string (fn [^String s] (keyword (.replace s \_ \-))))))
+
+(defn github-credential-fn
+  "Looks for the user email using the Google+ API after login with Google"
+  [token]
+  (let [access-token (:access-token token)
+        user-data    (call-github "/user" access-token)
+        email        (:email user-data)]
+    {:identity token :email email :roles #{::user}}))
+
 (def client-config
   (:google-oauth config))
 
@@ -98,6 +117,25 @@
                               :client_secret (:client-secret client-config)
                               :grant_type "authorization_code"
                               :redirect_uri (format-config-uri client-config)}}})
+
+(def get-public-repos (memoize (partial call-github "/user/repos?type=public")))
+(def get-github-handle (memoize (comp :login (partial call-github "/user"))))
+
+(def github-client-config (:github-oauth config))
+
+(def github-uri-config
+  {:authentication-uri {:url "https://github.com/login/oauth/authorize"
+                        :query {:client_id (:client-id github-client-config)
+                                :response_type "code"
+                                :redirect_uri (format-config-uri github-client-config)
+                                :scope ""}}
+
+   :access-token-uri {:url "https://github.com/login/oauth/access_token"
+                      :query {:client_id (:client-id github-client-config)
+                              :client_secret (:client-secret github-client-config)
+                              :grant_type "authorization_code"
+                              :redirect_uri (format-config-uri github-client-config)
+                              :code ""}}})
 
 (defn session-email
   "Find the email stored in the session"
@@ -193,10 +231,19 @@
 
 (def friend-configuration
   {:allow-anon? true
-   :workflows [(oauth2/workflow
-                {:client-config client-config
-                 :uri-config uri-config
-                 :credential-fn credential-fn})]})
+   :workflows [
+               ;; (oauth2/workflow
+               ;;  {:client-config client-config
+               ;;   :uri-config uri-config
+               ;;   :credential-fn credential-fn})
+
+               (oauth2/workflow
+                {:client-config github-client-config
+                 :uri-config github-uri-config
+                 ;; :config-auth {:roles #{::users/user}}
+                 :credential-fn github-credential-fn
+                 :access-token-parsefn #(-> % :body codec/form-decode (get "access_token"))})
+               ]})
 
 (defn wrap-logging [handler]
   (fn [{:keys [remote-addr request-method uri] :as request}]
