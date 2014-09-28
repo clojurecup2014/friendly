@@ -23,23 +23,25 @@
 
 ;; DATABASE ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def default-feeds [{:title "Planet Clojure"
-                     :favicon "http://planet.clojure.in/static/i/favicon.gif"
-                     :url "http://planet.clojure.in/atom.xml" :unread 42}
-                    {:title "Reddit /r/Clojure"
-                     :url "http://www.reddit.com/r/Clojure/.rss"
-                     :favicon "http://www.reddit.com/favicon.ico" :unread 16}
+(def default-feeds [{:title "Planet Clojure" :url "http://planet.clojure.in/atom.xml"
+                     :favicon "http://planet.clojure.in/static/i/favicon.gif" :unread "?"}
+                    {:title "Reddit /r/Clojure" :url "http://www.reddit.com/r/Clojure/.rss"
+                     :favicon "http://www.reddit.com/favicon.ico" :unread "?"}
                     {:title "Hacker News" :url "https://news.ycombinator.com/rss"
-                     :favicon "https://news.ycombinator.com/favicon.ico"
-                     :unread 7}])
+                     :favicon "https://news.ycombinator.com/favicon.ico" :unread "?"}
+                    ])
 
-(def subscriptions (atom {"denis.fuenzalida@gmail.com" default-feeds}))
+(def subscriptions (atom {})
 
 (defn subscribe [email feed]
   (let [feed-props {:title (feeds/feed-title feed) :url feed
                     :favicon (feeds/find-favicon feed) :unread "?"}]
     (swap! subscriptions update-in [email] conj feed-props)
     (println @subscriptions)))
+
+(defn set-default-feeds! [email]
+  (if-not [@subscriptions email]
+    (swap! subscriptions assoc email default-feeds)))
 
 ;; HELPERS ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -77,6 +79,7 @@
         gplus-addr "https://www.googleapis.com/plus/v1/people/me?access_token="
         gplus-info (client/get (str gplus-addr access-token) clj-http-opts)
         email (-> gplus-info :body :emails first :value)]
+    (set-default-feeds! email)
     {:identity token :email email :roles #{::user}}))
 
 (def client-config
