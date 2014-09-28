@@ -2,7 +2,8 @@
   (:require [reagent.core :as reagent :refer [atom]]
             [ajax.core :refer [GET POST]]
             [secretary.core :as secretary :include-macros true :refer [defroute]]
-            [goog.events :as events])
+            [goog.events :as events]
+            [hickory.core :as hickory])
   (:import goog.History
            goog.history.EventType))
 
@@ -104,24 +105,40 @@
      [:span.fa.fa-plus-square ""] " Track this website"
      ]]])
 
-(defn show-feed-screen []
+;; HACK!
+;; $("#body-N")[0].innerHTML = $("#body-N")[0].innerText
+(defn post-bodies []
+  (println "post bodies")
   (let [posts (get-in @user [:data "posts"])]
-    (for [post posts]
-      [:div
-       [:div.row.clearfix
-        [:h2 (post "title")
-         (when-not (= "" (post "author"))
-           [:small (str " by " (post "author"))])
-         [:a.btn.btn-default.btn-small
-          {:style {:margin-left "20px"} :href (post "url")
-           :target "_blank" :title "Open in new tab"}
-          [:i.glyphicon.glyphicon-hand-right ""]]
-         ]]
+    (doall
+     (for [i    (range (count posts))
+           post (nth posts i)
+           :let [id (str "body-" i) elem (by-id id)]]
+       (if elem
+         (let [div (.createElement js/document "DIV")]
+           (try
+             (set! (.-innerHTML div) (post "author"))
+             (.appendChild elem div)
+             (catch js/Error e nil))
+           ""))))))
 
-       [:div.row
-        (when-not (= "" (post "body"))
-          [:p (post "body")])
-        [:hr]]])))
+(defn show-feed-screen []
+  ;; (.setTimeout js/window (post-bodies) 2000)
+  [:div.list-group
+  (let [posts (get-in @user [:data "posts"])]
+    (for [i (range (count posts))
+          :let [post (nth posts i)
+                frag (hickory/parse-fragment (post "body"))
+                hicc (map hickory/as-hiccup frag)
+                ]]
+      ^{:key (str "body-" i)}
+      [:a.list-group-item {:href (post "url") :target "_blank"}
+       [:h4.list-group-item-heading
+        [:strong (post "title")]
+        (when-not (= "" (post "author")) [:small (str " by " (post "author"))])]
+       [:p.list-group-item-text
+        (post "body")]]
+      ))])
 
 (defn main-screen []
   (let [detail-fns {:home      welcome-screen
@@ -142,7 +159,7 @@
        [:ul.nav.nav-sidebar
         (for [i (range (count (@user "feeds"))) :let [feed ((@user "feeds") i)]]
           ^{:key (str i (feed "title"))}
-          [:li {:class (if (= :welcome detail-key) "active" "")}
+          [:li {:class (if (= (str i) (@user :index)) "active" "")}
            [:a {:href (str "#/feeds/" i)}
             [:img {:src (feed "favicon") :height 16 :width 16}]
             [:span.badge.pull-right (feed "unread")] (str " " (feed "title"))]])
