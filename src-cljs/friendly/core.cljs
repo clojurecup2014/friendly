@@ -145,7 +145,8 @@
                     hicc (map hickory/as-hiccup frag)
                     ]]
           ^{:key (str "body-" i)}
-          [:a.list-group-item {:href (post "url") :target "_blank"}
+          [:a.list-group-item
+           {:href (post "url") :target "_blank" :title "Click to open in a new tab"}
            [:h4.list-group-item-heading
             [:strong (post "title")]
             (when-not (= "" (post "author")) [:small (str " by " (post "author"))])]
