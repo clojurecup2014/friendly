@@ -18,7 +18,8 @@
         [ring.middleware.resource :only [wrap-resource]]
         [ring.middleware.session :only [wrap-session]]
         [org.httpkit.server :only [run-server]])
-  (:import [java.security MessageDigest]))
+  (:import [java.net URL]
+           [java.security MessageDigest]))
 
 ;; DATABASE ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -35,8 +36,8 @@
 (def subscriptions (atom {"denis.fuenzalida@gmail.com" default-feeds}))
 
 (defn subscribe [email feed]
-  (let [feed-props {:title "new feed" :favicon "https://github.com/favicon.ico"
-                    :url feed :unread "?"}]
+  (let [feed-props {:title (feeds/feed-title feed) :url feed
+                    :favicon (feeds/find-favicon feed) :unread "?"}]
     (swap! subscriptions update-in [email] conj feed-props)
     (println @subscriptions)))
 
