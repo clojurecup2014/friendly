@@ -15,6 +15,11 @@
                  [http-kit "2.0.0"]
                  [hickory "0.5.2"] ;; parse HTML to extract potential RSS feeds
 
+                 ;; RRS/OPML
+                 [com.rometools/rome "1.5.0"]
+                 [com.rometools/rome-opml "1.5.0"]
+                 [org.slf4j/slf4j-simple "1.7.7"]
+
                  ;; web resources, css, etc
                  [org.webjars/bootstrap "3.2.0"]
                  [org.webjars/bootswatch-lumen "3.2.0-1"]
