@@ -99,6 +99,7 @@
   (let [access-token (:access-token token)
         user-data    (call-github "/user" access-token)
         email        (:email user-data)]
+    (set-default-feeds! email)
     {:identity token :email email :roles #{::user}}))
 
 (def client-config
