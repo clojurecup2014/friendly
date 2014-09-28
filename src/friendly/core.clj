@@ -237,11 +237,13 @@
 (def friend-configuration
   {:allow-anon? true
    :workflows [
+               ;; GOOGLE OAUTH2 Workflow
                ;; (oauth2/workflow
                ;;  {:client-config client-config
                ;;   :uri-config uri-config
                ;;   :credential-fn credential-fn})
 
+               ;; Github OAuth2 Workflow
                (oauth2/workflow
                 {:client-config github-client-config
                  :uri-config github-uri-config
@@ -273,6 +275,6 @@
   (let [handler (if (in-dev?)
                   (reload/wrap-reload app) ;; only reload when dev
                   app)]
-    (println "Running Friendly HTTP Kit server...")
+    (println "Running Friendly HTTP Kit server on port 3000...")
     (run-server app {:port 3000})))
 
